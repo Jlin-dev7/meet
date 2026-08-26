@@ -28,7 +28,7 @@
         const res = await fetch(
   '/api/token?room=ma-salle&identity=user' + Date.now()
 );
-        if (!res.ok) throw new Error('Erreur token.php: ' + res.status);
+        if (!res.ok) throw new Error('Erreur API token: ' + res.status);
         const { token } = await res.json();
 
         // 2. Se connecter au serveur LiveKit Cloud
