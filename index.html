@@ -25,7 +25,9 @@
     joinBtn.onclick = async () => {
       try {
         // 1. Récupérer le token depuis notre backend PHP
-        const res = await fetch('token.php?room=ma-salle&identity=user' + Date.now());
+        const res = await fetch(
+  '/api/token?room=ma-salle&identity=user' + Date.now()
+);
         if (!res.ok) throw new Error('Erreur token.php: ' + res.status);
         const { token } = await res.json();
 
