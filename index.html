@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ma Visioconférence</title>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    #videos { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    video { width: 300px; border-radius: 8px; background: #000; }
+  </style>
+</head>
+<body>
+  <h1>Salle de visioconférence</h1>
+  <button id="joinBtn">Rejoindre la salle</button>
+  <div id="videos"></div>
+
+  <script>
+    const joinBtn = document.getElementById('joinBtn');
+    const videosDiv = document.getElementById('videos');
+
+    // 👉 Remplace par l'URL WebSocket de ton projet LiveKit Cloud
+    const LIVEKIT_URL = 'wss://masterclass-f9f6ofv8.livekit.cloud';
+
+    joinBtn.onclick = async () => {
+      try {
+        // 1. Récupérer le token depuis notre backend PHP
+        const res = await fetch('token.php?room=ma-salle&identity=user' + Date.now());
+        if (!res.ok) throw new Error('Erreur token.php: ' + res.status);
+        const { token } = await res.json();
+
+        // 2. Se connecter au serveur LiveKit Cloud
+        const room = new LivekitClient.Room();
+        await room.connect(LIVEKIT_URL, token);
+
+        // 3. Activer caméra + micro
+        await room.localParticipant.enableCameraAndMicrophone();
+
+        // 4. Afficher sa propre vidéo
+        room.localParticipant.videoTrackPublications.forEach((pub) => {
+          if (pub.track) attachTrack(pub.track, 'Moi');
+        });
+
+        // 5. Afficher les vidéos des autres participants
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+          attachTrack(track, participant.identity);
+        });
+
+        joinBtn.style.display = 'none';
+      } catch (err) {
+        console.error('Erreur complète :', err);
+        alert('Erreur : ' + err.message);
+      }
+    };
+
+    function attachTrack(track, label) {
+      if (track.kind === 'video') {
+        const el = track.attach();
+        el.style.width = '300px';
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `<p>${label}</p>`;
+        wrapper.appendChild(el);
+        videosDiv.appendChild(wrapper);
+      } else if (track.kind === 'audio') {
+        track.attach();
+      }
+    }
+  </script>
+</body>
+</html>
